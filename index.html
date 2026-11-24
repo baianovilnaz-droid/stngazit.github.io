@@ -505,271 +505,280 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = "https://cjseeleyafgrqfjmlhpl.supabase.co";
-  const SUPABASE_PUBLIC_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqc2VlbGV5YWZncnFmam1saHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU1NDUzMzMsImV4cCI6MjExMTEyMTMzM30.TmBOkXki5_5nGmDYV94A9qMsaYjEmKdMlGEuTgMZrcU";
-  const BUCKET_NAME = "wall-images";
-  const MAX_FILE_SIZE = 5 * 1024 * 1024;
+  // Ждём полной загрузки DOM, чтобы все элементы уже существовали
+  document.addEventListener("DOMContentLoaded", () => {
+    const SUPABASE_URL = "https://cjseeleyafgrqfjmlhpl.supabase.co";
+    const SUPABASE_PUBLIC_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqc2VlbGV5YWZncnFmam1saHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU1NDUzMzMsImV4cCI6MjExMTEyMTMzM30.TmBOkXki5_5nGmDYV94A9qMsaYjEmKdMlGEuTgMZrcU";
+    const BUCKET_NAME = "wall-images";
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-  const postsElement = document.getElementById("posts");
-  const countElement = document.getElementById("post-count");
-  const form = document.getElementById("post-form");
-  const contentInput = document.getElementById("content");
-  const imageInput = document.getElementById("image");
-  const preview = document.getElementById("preview");
-  const submitButton = document.getElementById("submit-button");
-  const statusElement = document.getElementById("form-status");
+    const postsElement = document.getElementById("posts");
+    const countElement = document.getElementById("post-count");
+    const form = document.getElementById("post-form");
+    const contentInput = document.getElementById("content");
+    const imageInput = document.getElementById("image");
+    const preview = document.getElementById("preview");
+    const submitButton = document.getElementById("submit-button");
+    const statusElement = document.getElementById("form-status");
 
-  let supabaseClient = null;
-  let cachedPosts = [];
-
-  function showStatus(message, type = "") {
-    statusElement.textContent = message;
-    statusElement.className = "status";
-    if (type) statusElement.classList.add(type);
-  }
-
-  function formatDate(dateString) {
-    return new Date(dateString).toLocaleDateString("ru-RU", {
-      day: "numeric", month: "long", year: "numeric"
-    });
-  }
-
-  function showError(message) {
-    postsElement.replaceChildren();
-    const box = document.createElement("div");
-    box.className = "empty-state";
-    box.textContent = message;
-    postsElement.appendChild(box);
-    countElement.textContent = "Пока пусто";
-  }
-
-  function likedInThisTab(postId) {
-    return sessionStorage.getItem("liked-" + postId) === "yes";
-  }
-
-  function renderPosts(posts) {
-    postsElement.replaceChildren();
-    countElement.textContent = posts.length + (posts.length === 1 ? " заметка" : " заметок");
-
-    if (!posts.length) {
-      const empty = document.createElement("div");
-      empty.className = "empty-state";
-      empty.textContent = "Здесь пока тихо. Добавь первую заметку — и стенгазета оживёт! ✨";
-      postsElement.appendChild(empty);
+    // Проверка, что все элементы найдены (поможет диагностировать проблему)
+    if (!postsElement || !countElement || !form || !contentInput || !imageInput || !preview || !submitButton || !statusElement) {
+      console.error("Не найдены элементы формы или ленты. Проверьте id в HTML.");
       return;
     }
 
-    for (const post of posts) {
-      const card = document.createElement("article");
-      card.className = "post-card";
+    let supabaseClient = null;
+    let cachedPosts = [];
 
-      const imageWrap = document.createElement("div");
-      imageWrap.className = "post-image-wrap";
+    function showStatus(message, type = "") {
+      statusElement.textContent = message;
+      statusElement.className = "status";
+      if (type) statusElement.classList.add(type);
+    }
 
-      const image = document.createElement("img");
-      image.className = "post-image";
-      image.src = post.image_url;
-      image.alt = "Изображение к заметке";
-      image.loading = "lazy";
-
-      const label = document.createElement("span");
-      label.className = "post-image-label";
-      label.textContent = "НОВЫЙ ВЫПУСК";
-
-      imageWrap.append(image, label);
-
-      const body = document.createElement("div");
-      body.className = "post-body";
-
-      const text = document.createElement("p");
-      text.className = "post-content";
-      text.textContent = post.content;
-
-      const footer = document.createElement("div");
-      footer.className = "post-footer";
-
-      const date = document.createElement("time");
-      date.dateTime = post.created_at;
-      date.textContent = formatDate(post.created_at);
-
-      const likeButton = document.createElement("button");
-      likeButton.className = "like-button";
-      likeButton.type = "button";
-      likeButton.setAttribute("aria-label", "Поставить лайк");
-
-      const heart = document.createElement("span");
-      heart.className = "like-heart";
-      heart.textContent = likedInThisTab(post.id) ? "♥" : "♡";
-
-      const likesCount = document.createElement("span");
-      likesCount.textContent = String(post.likes);
-
-      if (likedInThisTab(post.id)) likeButton.disabled = true;
-
-      likeButton.append(heart, likesCount);
-      likeButton.addEventListener("click", async () => {
-        likeButton.disabled = true;
-        const { data, error } = await supabaseClient.rpc("like_wall_post", { p_post_id: post.id });
-
-        if (error) {
-          likeButton.disabled = false;
-          showStatus("Не получилось поставить лайк: " + error.message, "error");
-          return;
-        }
-
-        sessionStorage.setItem("liked-" + post.id, "yes");
-        heart.textContent = "♥";
-        likesCount.textContent = String(data);
-
-        const cached = cachedPosts.find(p => p.id === post.id);
-        if (cached) cached.likes = data;
+    function formatDate(dateString) {
+      return new Date(dateString).toLocaleDateString("ru-RU", {
+        day: "numeric", month: "long", year: "numeric"
       });
-
-      footer.append(date, likeButton);
-      body.append(text, footer);
-      card.append(imageWrap, body);
-      postsElement.appendChild(card);
-    }
-  }
-
-  async function loadPosts() {
-    const { data, error } = await supabaseClient
-      .from("wall_posts")
-      .select("id, content, image_url, likes, created_at")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      showError("Не удалось загрузить стенгазету. Проверь настройки Supabase и SQL-политики.");
-      console.error(error);
-      return;
     }
 
-    cachedPosts = data || [];
-    renderPosts(cachedPosts);
-  }
+    function showError(message) {
+      postsElement.replaceChildren();
+      const box = document.createElement("div");
+      box.className = "empty-state";
+      box.textContent = message;
+      postsElement.appendChild(box);
+      countElement.textContent = "Пока пусто";
+    }
 
-  imageInput.addEventListener("change", () => {
-    const file = imageInput.files[0];
+    function likedInThisTab(postId) {
+      return sessionStorage.getItem("liked-" + postId) === "yes";
+    }
 
-    if (!file) {
+    function renderPosts(posts) {
+      postsElement.replaceChildren();
+      countElement.textContent = posts.length + (posts.length === 1 ? " заметка" : " заметок");
+
+      if (!posts.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "Здесь пока тихо. Добавь первую заметку — и стенгазета оживёт! ✨";
+        postsElement.appendChild(empty);
+        return;
+      }
+
+      for (const post of posts) {
+        const card = document.createElement("article");
+        card.className = "post-card";
+
+        const imageWrap = document.createElement("div");
+        imageWrap.className = "post-image-wrap";
+
+        const image = document.createElement("img");
+        image.className = "post-image";
+        image.src = post.image_url;
+        image.alt = "Изображение к заметке";
+        image.loading = "lazy";
+
+        const label = document.createElement("span");
+        label.className = "post-image-label";
+        label.textContent = "НОВЫЙ ВЫПУСК";
+
+        imageWrap.append(image, label);
+
+        const body = document.createElement("div");
+        body.className = "post-body";
+
+        const text = document.createElement("p");
+        text.className = "post-content";
+        text.textContent = post.content;
+
+        const footer = document.createElement("div");
+        footer.className = "post-footer";
+
+        const date = document.createElement("time");
+        date.dateTime = post.created_at;
+        date.textContent = formatDate(post.created_at);
+
+        const likeButton = document.createElement("button");
+        likeButton.className = "like-button";
+        likeButton.type = "button";
+        likeButton.setAttribute("aria-label", "Поставить лайк");
+
+        const heart = document.createElement("span");
+        heart.className = "like-heart";
+        heart.textContent = likedInThisTab(post.id) ? "♥" : "♡";
+
+        const likesCount = document.createElement("span");
+        likesCount.textContent = String(post.likes);
+
+        if (likedInThisTab(post.id)) likeButton.disabled = true;
+
+        likeButton.append(heart, likesCount);
+        likeButton.addEventListener("click", async () => {
+          likeButton.disabled = true;
+          const { data, error } = await supabaseClient.rpc("like_wall_post", { p_post_id: post.id });
+
+          if (error) {
+            likeButton.disabled = false;
+            showStatus("Не получилось поставить лайк: " + error.message, "error");
+            return;
+          }
+
+          sessionStorage.setItem("liked-" + post.id, "yes");
+          heart.textContent = "♥";
+          likesCount.textContent = String(data);
+
+          const cached = cachedPosts.find(p => p.id === post.id);
+          if (cached) cached.likes = data;
+        });
+
+        footer.append(date, likeButton);
+        body.append(text, footer);
+        card.append(imageWrap, body);
+        postsElement.appendChild(card);
+      }
+    }
+
+    async function loadPosts() {
+      const { data, error } = await supabaseClient
+        .from("wall_posts")
+        .select("id, content, image_url, likes, created_at")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        showError("Не удалось загрузить стенгазету. Проверь настройки Supabase и SQL-политики.");
+        console.error(error);
+        return;
+      }
+
+      cachedPosts = data || [];
+      renderPosts(cachedPosts);
+    }
+
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files[0];
+
+      if (!file) {
+        preview.removeAttribute("src");
+        preview.style.display = "none";
+        return;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        showStatus("Файл больше 5 MB. Выбери изображение поменьше.", "error");
+        imageInput.value = "";
+        preview.removeAttribute("src");
+        preview.style.display = "none";
+        return;
+      }
+
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+      if (!allowedTypes.includes(file.type)) {
+        showStatus("Поддерживаются только JPG, PNG и WEBP.", "error");
+        imageInput.value = "";
+        preview.removeAttribute("src");
+        preview.style.display = "none";
+        return;
+      }
+
+      showStatus("");
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const content = contentInput.value.trim();
+      const file = imageInput.files[0];
+
+      if (!content) {
+        showStatus("Напиши текст заметки.", "error");
+        return;
+      }
+
+      if (!file) {
+        showStatus("Сначала выбери изображение.", "error");
+        return;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        showStatus("Файл больше 5 MB.", "error");
+        return;
+      }
+
+      const extensions = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+      const extension = extensions[file.type];
+
+      if (!extension) {
+        showStatus("Поддерживаются только JPG, PNG и WEBP.", "error");
+        return;
+      }
+
+      submitButton.disabled = true;
+      submitButton.textContent = "Публикуем…";
+      showStatus("");
+
+      const filePath = crypto.randomUUID() + "." + extension;
+      const { error: uploadError } = await supabaseClient
+        .storage
+        .from(BUCKET_NAME)
+        .upload(filePath, file, { contentType: file.type, upsert: false });
+
+      if (uploadError) {
+        console.error(uploadError);
+        showStatus("Не удалось загрузить изображение. Проверь bucket и политику Storage.", "error");
+        submitButton.disabled = false;
+        submitButton.textContent = "Опубликовать заметку";
+        return;
+      }
+
+      const { data: publicUrlData } = supabaseClient
+        .storage
+        .from(BUCKET_NAME)
+        .getPublicUrl(filePath);
+
+      const { data: inserted, error: insertError } = await supabaseClient
+        .from("wall_posts")
+        .insert({ content: content, image_url: publicUrlData.publicUrl })
+        .select("id, content, image_url, likes, created_at")
+        .single();
+
+      if (insertError) {
+        console.error(insertError);
+        showStatus(
+          "Публикация не добавилась: " + insertError.message +
+          ". Проверь RLS-политику INSERT для таблицы wall_posts.",
+          "error"
+        );
+        submitButton.disabled = false;
+        submitButton.textContent = "Опубликовать заметку";
+        return;
+      }
+
+      form.reset();
       preview.removeAttribute("src");
       preview.style.display = "none";
-      return;
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      showStatus("Файл больше 5 MB. Выбери изображение поменьше.", "error");
-      imageInput.value = "";
-      preview.removeAttribute("src");
-      preview.style.display = "none";
-      return;
-    }
-
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
-      showStatus("Поддерживаются только JPG, PNG и WEBP.", "error");
-      imageInput.value = "";
-      preview.removeAttribute("src");
-      preview.style.display = "none";
-      return;
-    }
-
-    showStatus("");
-    preview.src = URL.createObjectURL(file);
-    preview.style.display = "block";
-  });
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const content = contentInput.value.trim();
-    const file = imageInput.files[0];
-
-    if (!content) {
-      showStatus("Напиши текст заметки.", "error");
-      return;
-    }
-
-    if (!file) {
-      showStatus("Сначала выбери изображение.", "error");
-      return;
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      showStatus("Файл больше 5 MB.", "error");
-      return;
-    }
-
-    const extensions = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
-    const extension = extensions[file.type];
-
-    if (!extension) {
-      showStatus("Поддерживаются только JPG, PNG и WEBP.", "error");
-      return;
-    }
-
-    submitButton.disabled = true;
-    submitButton.textContent = "Публикуем…";
-    showStatus("");
-
-    const filePath = crypto.randomUUID() + "." + extension;
-    const { error: uploadError } = await supabaseClient
-      .storage
-      .from(BUCKET_NAME)
-      .upload(filePath, file, { contentType: file.type, upsert: false });
-
-    if (uploadError) {
-      console.error(uploadError);
-      showStatus("Не удалось загрузить изображение. Проверь bucket и политику Storage.", "error");
+      showStatus("Заметка опубликована! 🎉", "success");
       submitButton.disabled = false;
       submitButton.textContent = "Опубликовать заметку";
-      return;
+
+      cachedPosts = [inserted, ...cachedPosts];
+      renderPosts(cachedPosts);
+
+      await loadPosts();
+    });
+
+    if (
+      SUPABASE_URL.includes("https://cjseeleyafgrqfjmlhpl.supabase.co") ||
+      SUPABASE_PUBLIC_KEY.includes("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqc2VlbGV5YWZncnFmam1saHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU1NDUzMzMsImV4cCI6MjExMTEyMTMzM30.TmBOkXki5_5nGmDYV94A9qMsaYjEmKdMlGEuTgMZrcU")
+    ) {
+      showError("Сначала вставь Project URL и публичный ключ Supabase в код.");
+    } else {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY);
+      loadPosts();
     }
-
-    const { data: publicUrlData } = supabaseClient
-      .storage
-      .from(BUCKET_NAME)
-      .getPublicUrl(filePath);
-
-    const { data: inserted, error: insertError } = await supabaseClient
-      .from("wall_posts")
-      .insert({ content: content, image_url: publicUrlData.publicUrl })
-      .select("id, content, image_url, likes, created_at")
-      .single();
-
-    if (insertError) {
-      console.error(insertError);
-      showStatus(
-        "Публикация не добавилась: " + insertError.message +
-        ". Проверь RLS-политику INSERT для таблицы wall_posts.",
-        "error"
-      );
-      submitButton.disabled = false;
-      submitButton.textContent = "Опубликовать заметку";
-      return;
-    }
-
-    form.reset();
-    preview.removeAttribute("src");
-    preview.style.display = "none";
-    showStatus("Заметка опубликована! 🎉", "success");
-    submitButton.disabled = false;
-    submitButton.textContent = "Опубликовать заметку";
-
-    cachedPosts = [inserted, ...cachedPosts];
-    renderPosts(cachedPosts);
-
-    await loadPosts();
   });
-
-  if (
-    SUPABASE_URL.includes("https://cjseeleyafgrqfjmlhpl.supabase.co") ||
-    SUPABASE_PUBLIC_KEY.includes("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqc2VlbGV5YWZncnFmam1saHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU1NDUzMzMsImV4cCI6MjExMTEyMTMzM30.TmBOkXki5_5nGmDYV94A9qMsaYjEmKdMlGEuTgMZrcU")
-  ) {
-    showError("Сначала вставь Project URL и публичный ключ Supabase в код.");
-  } else {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY);
-    loadPosts();
-  }
 </script>
 </body>
 </html>
