@@ -1,832 +1,774 @@
+Вот красивый дизайн для «Плакатории» — цифровой стенгазеты. Я сохранил всю структуру и функциональность (Supabase, форма, лайки), но переработал визуальный стиль: добавил мягкие градиенты, скругления, живые тени и аккуратную типографику.
+
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Плакатория — цифровая стенгазета</title>
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link
-href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
-rel="stylesheet"
-
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root {
---ink: #26233d;
---muted: #77748c;
---paper: #fffdf8;
---pink: #ff6b8a;
---yellow: #ffd45e;
---blue: #aee7ff;
---purple: #c5b6ff;
---green: #c8f0cf;
---border: #e9e5dc;
---shadow: 0 14px 40px rgba(48, 38, 79, .10);
-}
-
-* {
-box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  color: var(--ink);
-  font-family: "Nunito", sans-serif;
-  background:
-    radial-gradient(circle at 10% 5%, #ffe9ed 0, transparent 25rem),
-    radial-gradient(circle at 95% 30%, #e6f8ff 0, transparent 28rem),
-    #f8f6f0;
-}
-button,
-input,
-textarea {
-  font: inherit;
-}
-button {
-cursor: pointer;
-}
-
-.page {
-  width: min(1120px, calc(100% - 32px));
-  margin: 0 auto;
-}
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-gap: 20px;
-
-padding: 22px 0;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 900;
-font-size: 1.2rem;
-}
-
-.brand-icon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: var(--yellow);
-  box-shadow: 4px 4px 0 var(--ink);
-  transform: rotate(-5deg);
-  font-size: 1.35rem;
-}
-.top-note {
-  color: var(--muted);
-  font-size: .9rem;
-  font-weight: 700;
-}
-.hero {
-position: relative;
-overflow: hidden;
-
-padding: clamp(28px, 6vw, 66px);
-border: 2px solid var(--ink);
-
-border-radius: 30px;
-background: var(--yellow);
-box-shadow: 8px 8px 0 var(--ink);
-}
-
-.hero::after {
-  content: "✦";
-  position: absolute;
-  right: 8%;
-  bottom: -48px;
-  color: rgba(255, 255, 255, .5);
-font-size: 15rem;
-line-height: 1;
-transform: rotate(12deg);
-pointer-events: none;
-}
-
-.hero-label {
-display: inline-block;
-padding: 7px 12px;
-border: 1px solid var(--ink);
-border-radius: 999px;
-background: var(--paper);
-font-size: .78rem;
-
-font-weight: 900;
-letter-spacing: .08em;
-text-transform: uppercase;
-}
-
-h1 {
-position: relative;
-z-index: 1;
-
-max-width: 700px;
-margin: 18px 0 10px;
-font-size: clamp(2.6rem, 8vw, 5.6rem);
-font-weight: 900;
-letter-spacing: -.06em;
-line-height: .93;
-}
-
-.hero p {
-  position: relative;
-  z-index: 1;
-  max-width: 520px;
-margin: 18px 0 0;
-font-size: 1.08rem;
-font-weight: 700;
-line-height: 1.6;
-}
-
-.hero-sticker {
-  position: absolute;
-  z-index: 2;
-  top: 28px;
-  right: 34px;
-  display: grid;
-  place-items: center;
-width: 96px;
-height: 96px;
-border: 2px solid var(--ink);
-border-radius: 50%;
-background: var(--pink);
-box-shadow: 4px 4px 0 var(--ink);
-color: white;
-font-size: 2.4rem;
-transform: rotate(10deg);
-}
-
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 28px;
-  align-items: start;
-  margin: 38px 0 60px;
-}
-.section-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: 16px;
-  margin: 0 0 18px;
-}
-
-.section-title h2 {
-margin: 0;
-font-size: 1.8rem;
-font-weight: 900;
-letter-spacing: -.04em;
-}
-
-.section-title span {
-  color: var(--muted);
-  font-size: .9rem;
-  font-weight: 700;
-}
-
-.posts {
-  display: grid;
-grid-template-columns: repeat(2, minmax(0, 1fr));
-gap: 18px;
-}
-
-.post-card {
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 22px;
-  background: var(--paper);
-  box-shadow: var(--shadow);
-  transition: transform .18s ease, box-shadow .18s ease;
-}
-.post-card:hover {
-  transform: translateY(-4px) rotate(-.4deg);
-  box-shadow: 0 20px 46px rgba(48, 38, 79, .15);
-}
-.post-image-wrap {
-  position: relative;
-  height: 210px;
-  overflow: hidden;
-  background: #eeeaf8;
-}
-
-.post-image {
-display: block;
-width: 100%;
-height: 100%;
-
-object-fit: cover;
-}
-
-.post-image-label {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  padding: 6px 10px;
-  border: 1px solid var(--ink);
-  border-radius: 999px;
-  background: var(--paper);
-  font-size: .72rem;
-  font-weight: 900;
-}
-.post-body {
-  padding: 16px;
-}
-
-.post-content {
-  margin: 0;
-overflow-wrap: anywhere;
-font-size: 1rem;
-font-weight: 800;
-line-height: 1.5;
-white-space: pre-wrap;
-}
-
-.post-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-top: 17px;
-  color: var(--muted);
-  font-size: .8rem;
-  font-weight: 700;
-}
-.like-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 12px;
-  border: 1px solid #ffd1db;
-  border-radius: 999px;
-  background: #fff0f3;
-  color: #d94467;
-  font-weight: 900;
-  transition: transform .15s ease, background .15s ease;
-}
-.like-button:hover:not(:disabled) {
-  background: #ffe0e7;
-  transform: scale(1.05);
-}
-.like-button:disabled {
-  cursor: default;
-  opacity: .75;
-}
-.like-heart {
-  font-size: 1.05rem;
-}
-.sidebar {
-  position: sticky;
-top: 20px;
-}
-
-.form-card {
-  padding: 22px;
-  border: 2px solid var(--ink);
-  border-radius: 24px;
-  background: var(--paper);
-  box-shadow: 6px 6px 0 var(--ink);
-}
-.form-card h2 {
-  margin: 0 0 6px;
-  font-size: 1.45rem;
-  font-weight: 900;
-  letter-spacing: -.04em;
-}
-
-.form-intro {
-margin: 0 0 18px;
-color: var(--muted);
-font-size: .9rem;
-font-weight: 700;
-line-height: 1.5;
-}
-
-.field-label {
-  display: block;
-  margin: 14px 0 7px;
-  font-size: .86rem;
-  font-weight: 900;
-}
-textarea,
-input[type="file"] {
-  width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: white;
-}
-
-textarea {
-min-height: 120px;
-padding: 12px;
-resize: vertical;
-line-height: 1.5;
-}
-
-input[type="file"] {
-  padding: 10px;
-font-size: .82rem;
-}
-
-textarea:focus,
-input:focus {
-  outline: 3px solid rgba(174, 231, 255, .75);
-  border-color: #64bfe7;
-}
-.hint {
-  margin: 7px 0 0;
-  color: var(--muted);
-  font-size: .76rem;
-}
-
-.preview {
-  display: none;
-width: 100%;
-max-height: 190px;
-margin-top: 12px;
-border-radius: 14px;
-object-fit: cover;
-}
-
-.submit-button {
-  width: 100%;
-margin-top: 17px;
-padding: 13px 16px;
-border: 2px solid var(--ink);
-border-radius: 14px;
-background: var(--pink);
-box-shadow: 3px 3px 0 var(--ink);
-color: white;
-
-font-weight: 900;
-transition: transform .15s ease, box-shadow .15s ease;
-}
-
-.submit-button:hover:not(:disabled) {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 var(--ink);
-}
-.submit-button:disabled {
-  cursor: wait;
-  opacity: .65;
-}
-
-.status {
-  min-height: 22px;
-margin: 12px 0 0;
-
-font-size: .86rem;
-font-weight: 800;
-line-height: 1.4;
-}
-
-.status.error {
-  color: #c73655;
-}
-.status.success {
-  color: #27804a;
-}
-.empty-state {
-  grid-column: 1 / -1;
-  padding: 30px;
-  border: 2px dashed #d8d2e6;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, .65);
-  color: var(--muted);
-  text-align: center;
-  font-weight: 800;
-  line-height: 1.6;
-}
-.footer {
-  padding: 0 0 32px;
-  color: var(--muted);
-  text-align: center;
-  font-size: .85rem;
-  font-weight: 700;
-}
-@media (max-width: 820px) {
-  .layout {
-grid-template-columns: 1fr;
-}
-
-  .sidebar {
-    position: static;
-    grid-row: 1;
+  :root {
+    --ink: #2b2745;
+    --muted: #7a7690;
+    --paper: #fffdf9;
+    --pink: #ff6b8a;
+    --pink-soft: #fff0f3;
+    --yellow: #ffd45e;
+    --yellow-soft: #fff8e6;
+    --blue: #aee7ff;
+    --purple: #c5b6ff;
+    --green: #c8f0cf;
+    --border: #ece8e0;
+    --shadow-sm: 0 4px 14px rgba(48, 38, 79, .06);
+    --shadow: 0 14px 40px rgba(48, 38, 79, .10);
+    --shadow-lg: 0 22px 60px rgba(48, 38, 79, .16);
+    --radius: 22px;
   }
-.posts {
-grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-}
 
-@media (max-width: 560px) {
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    color: var(--ink);
+    font-family: "Nunito", sans-serif;
+    background:
+      radial-gradient(circle at 8% 4%, #ffe9ed 0, transparent 26rem),
+      radial-gradient(circle at 94% 26%, #e6f8ff 0, transparent 30rem),
+      radial-gradient(circle at 50% 100%, #f0ecff 0, transparent 34rem),
+      #f8f6f0;
+    background-attachment: fixed;
+  }
+
+  button, input, textarea { font: inherit; }
+  button { cursor: pointer; }
+
   .page {
-    width: min(100% - 22px, 1120px);
+    width: min(1120px, calc(100% - 32px));
+    margin: 0 auto;
   }
 
+  /* ── Topbar ─────────────────────────────── */
   .topbar {
-    align-items: flex-start;
-}
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 24px 4px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 900;
+    font-size: 1.2rem;
+    letter-spacing: -.02em;
+  }
+
+  .brand-icon {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #ffe07a, var(--yellow));
+    box-shadow: 3px 3px 0 var(--ink), var(--shadow-sm);
+    transform: rotate(-5deg);
+    font-size: 1.35rem;
+    transition: transform .25s ease;
+  }
+  .brand:hover .brand-icon { transform: rotate(5deg) scale(1.05); }
 
   .top-note {
-    max-width: 130px;
-    text-align: right;
+    color: var(--muted);
+    font-size: .9rem;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .7);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(6px);
   }
 
+  /* ── Hero ───────────────────────────────── */
   .hero {
-padding: 30px 22px;
+    position: relative;
+    overflow: hidden;
+    padding: clamp(30px, 6vw, 68px);
+    border: 2px solid var(--ink);
+    border-radius: 32px;
+    background:
+      radial-gradient(circle at 88% 18%, rgba(255, 255, 255, .55) 0, transparent 22rem),
+      linear-gradient(135deg, #ffe27a 0%, var(--yellow) 55%, #ffcf45 100%);
+    box-shadow: 8px 8px 0 var(--ink), var(--shadow-lg);
+  }
 
-border-radius: 23px;
-}
+  .hero::after {
+    content: "✦";
+    position: absolute;
+    right: 8%;
+    bottom: -48px;
+    color: rgba(255, 255, 255, .55);
+    font-size: 15rem;
+    line-height: 1;
+    transform: rotate(12deg);
+    pointer-events: none;
+  }
+
+  .hero-label {
+    display: inline-block;
+    padding: 8px 14px;
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    background: var(--paper);
+    font-size: .78rem;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    box-shadow: 2px 2px 0 rgba(43, 39, 69, .25);
+  }
+
+  h1 {
+    position: relative;
+    z-index: 1;
+    max-width: 700px;
+    margin: 20px 0 12px;
+    font-size: clamp(2.6rem, 8vw, 5.6rem);
+    font-weight: 900;
+    letter-spacing: -.06em;
+    line-height: .93;
+    text-shadow: 2px 2px 0 rgba(255, 255, 255, .35);
+  }
+
+  .hero p {
+    position: relative;
+    z-index: 1;
+    max-width: 520px;
+    margin: 18px 0 0;
+    font-size: 1.08rem;
+    font-weight: 700;
+    line-height: 1.6;
+  }
 
   .hero-sticker {
-    top: 14px;
-    right: 14px;
-    width: 58px;
-    height: 58px;
-    font-size: 1.5rem;
+    position: absolute;
+    z-index: 2;
+    top: 30px;
+    right: 36px;
+    display: grid;
+    place-items: center;
+    width: 98px;
+    height: 98px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: linear-gradient(145deg, #ff8ba3, var(--pink));
+    box-shadow: 4px 4px 0 var(--ink), var(--shadow);
+    color: white;
+    font-size: 2.4rem;
+    transform: rotate(10deg);
+    animation: float 6s ease-in-out infinite;
   }
-  .hero p {
-    max-width: 90%;
-    font-size: .98rem;
+  @keyframes float {
+    0%, 100% { transform: rotate(10deg) translateY(0); }
+    50% { transform: rotate(6deg) translateY(-8px); }
   }
-  .posts {
-    grid-template-columns: 1fr;
-  }
-  .post-image-wrap {
-    height: 230px;
-  }
+
+  /* ── Layout ─────────────────────────────── */
   .layout {
-    margin-top: 30px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 30px;
+    align-items: start;
+    margin: 42px 0 64px;
   }
-}
+
+  .section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 16px;
+    margin: 0 0 20px;
+  }
+
+  .section-title h2 {
+    margin: 0;
+    font-size: 1.85rem;
+    font-weight: 900;
+    letter-spacing: -.04em;
+  }
+
+  .section-title span {
+    color: var(--muted);
+    font-size: .9rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .7);
+    border: 1px solid var(--border);
+  }
+
+  /* ── Posts ──────────────────────────────── */
+  .posts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .post-card {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--paper);
+    box-shadow: var(--shadow-sm);
+    transition: transform .22s ease, box-shadow .22s ease;
+  }
+  .post-card:hover {
+    transform: translateY(-5px) rotate(-.4deg);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .post-image-wrap {
+    position: relative;
+    height: 210px;
+    overflow: hidden;
+    background: #eeeaf8;
+  }
+
+  .post-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .4s ease;
+  }
+  .post-card:hover .post-image { transform: scale(1.05); }
+
+  .post-image-label {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 6px 11px;
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    background: var(--paper);
+    font-size: .72rem;
+    font-weight: 900;
+    letter-spacing: .04em;
+    box-shadow: 2px 2px 0 rgba(43, 39, 69, .18);
+  }
+
+  .post-body { padding: 18px; }
+
+  .post-content {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.55;
+    white-space: pre-wrap;
+  }
+
+  .post-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: .8rem;
+    font-weight: 700;
+  }
+
+  .like-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border: 1px solid #ffd1db;
+    border-radius: 999px;
+    background: var(--pink-soft);
+    color: #d94467;
+    font-weight: 900;
+    transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+  }
+  .like-button:hover:not(:disabled) {
+    background: #ffe0e7;
+    transform: scale(1.06);
+    box-shadow: 0 4px 12px rgba(217, 68, 103, .18);
+  }
+  .like-button:disabled {
+    cursor: default;
+    opacity: .8;
+  }
+  .like-heart { font-size: 1.05rem; }
+
+  /* ── Sidebar / Form ─────────────────────── */
+  .sidebar {
+    position: sticky;
+    top: 20px;
+  }
+
+  .form-card {
+    padding: 24px;
+    border: 2px solid var(--ink);
+    border-radius: 26px;
+    background: var(--paper);
+    box-shadow: 6px 6px 0 var(--ink), var(--shadow);
+  }
+  .form-card h2 {
+    margin: 0 0 6px;
+    font-size: 1.45rem;
+    font-weight: 900;
+    letter-spacing: -.04em;
+  }
+
+  .form-intro {
+    margin: 0 0 18px;
+    color: var(--muted);
+    font-size: .9rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .field-label {
+    display: block;
+    margin: 14px 0 7px;
+    font-size: .86rem;
+    font-weight: 900;
+  }
+
+  textarea, input[type="file"] {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: white;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+
+  textarea {
+    min-height: 120px;
+    padding: 12px;
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  input[type="file"] {
+    padding: 10px;
+    font-size: .82rem;
+  }
+
+  textarea:focus, input:focus {
+    outline: none;
+    border-color: #64bfe7;
+    box-shadow: 0 0 0 4px rgba(174, 231, 255, .5);
+  }
+
+  .hint {
+    margin: 7px 0 0;
+    color: var(--muted);
+    font-size: .76rem;
+  }
+
+  .preview {
+    display: none;
+    width: 100%;
+    max-height: 190px;
+    margin-top: 12px;
+    border-radius: 14px;
+    object-fit: cover;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .submit-button {
+    width: 100%;
+    margin-top: 17px;
+    padding: 14px 16px;
+    border: 2px solid var(--ink);
+    border-radius: 14px;
+    background: linear-gradient(135deg, #ff8ba3, var(--pink));
+    box-shadow: 3px 3px 0 var(--ink);
+    color: white;
+    font-weight: 900;
+    letter-spacing: .01em;
+    transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+  }
+
+  .submit-button:hover:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--ink);
+    filter: brightness(1.04);
+  }
+  .submit-button:disabled {
+    cursor: wait;
+    opacity: .65;
+  }
+
+  .status {
+    min-height: 22px;
+    margin: 12px 0 0;
+    font-size: .86rem;
+    font-weight: 800;
+    line-height: 1.4;
+  }
+  .status.error { color: #c73655; }
+  .status.success { color: #27804a; }
+
+  /* ── Empty / Footer ─────────────────────── */
+  .empty-state {
+    grid-column: 1 / -1;
+    padding: 34px;
+    border: 2px dashed #d8d2e6;
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, .7);
+    color: var(--muted);
+    text-align: center;
+    font-weight: 800;
+    line-height: 1.6;
+    backdrop-filter: blur(4px);
+  }
+
+  .footer {
+    padding: 0 0 36px;
+    color: var(--muted);
+    text-align: center;
+    font-size: .85rem;
+    font-weight: 700;
+  }
+
+  /* ── Responsive ─────────────────────────── */
+  @media (max-width: 820px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; grid-row: 1; }
+    .posts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 560px) {
+    .page { width: min(100% - 22px, 1120px); }
+    .topbar { align-items: flex-start; }
+    .top-note { max-width: 140px; text-align: right; font-size: .8rem; }
+    .hero { padding: 32px 22px; border-radius: 24px; }
+    .hero-sticker {
+      top: 14px; right: 14px;
+      width: 60px; height: 60px;
+      font-size: 1.5rem;
+    }
+    .hero p { max-width: 90%; font-size: .98rem; }
+    .posts { grid-template-columns: 1fr; }
+    .post-image-wrap { height: 230px; }
+    .layout { margin-top: 30px; }
+  }
 </style>
 </head>
-
 <body>
 <div class="page">
-<header class="topbar">
-<div class="brand">
-<span class="brand-icon">✂️</span>
-<span>Плакатория</span>
-</div>
-<div class="top-note">Место для классных идей ✨</div>
-</header>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon">✂️</span>
+      <span>Плакатория</span>
+    </div>
+    <div class="top-note">Место для классных идей ✨</div>
+  </header>
 
-<main>
-  <section class="hero">
-    <span class="hero-label">Твоя цифровая стенгазета</span>
-    <div class="hero-sticker" aria-hidden="true">★</div>
-    <h1>Новости,<br>идеи и мы!</h1>
-    <p>
-      Добавляй фотографии, делись хорошими новостями
-и поддерживай публикации лайками.
-</p>
-</section>
-
-  <div class="layout">
-    <section>
-      <div class="section-title">
-        <h2>Свежие выпуски</h2>
-        <span id="post-count">Загружаем…</span>
-</div>
-
-      <div class="posts" id="posts">
-        <div class="empty-state">Загружаем публикации…</div>
-      </div>
+  <main>
+    <section class="hero">
+      <span class="hero-label">Твоя цифровая стенгазета</span>
+      <div class="hero-sticker" aria-hidden="true">★</div>
+      <h1>Новости,<br>идеи и мы!</h1>
+      <p>Добавляй фотографии, делись хорошими новостями и поддерживай публикации лайками.</p>
     </section>
-    <aside class="sidebar">
-      <form class="form-card" id="post-form">
-        <h2>Добавить заметку ✍️</h2>
-        <p class="form-intro">
-          Напиши коротко и прикрепи изображение для своей публикации.
-        </p>
-        <label class="field-label" for="content">Текст заметки</label>
-        <textarea
-          id="content"
-name="content"
-maxlength="300"
 
-placeholder="Например: сегодня у нас прошёл классный конкурс!"
-required
-></textarea>
-<p class="hint">До 300 символов.</p>
+    <div class="layout">
+      <section>
+        <div class="section-title">
+          <h2>Свежие выпуски</h2>
+          <span id="post-count">Загружаем…</span>
+        </div>
+        <div class="posts" id="posts">
+          <div class="empty-state">Загружаем публикации…</div>
+        </div>
+      </section>
 
-        <label class="field-label" for="image">Изображение</label>
-        <input
-          id="image"
-          name="image"
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          required
-        >
-        <p class="hint">PNG, JPG или WEBP. Максимум 5 MB.</p>
-        <img class="preview" id="preview" alt="Предпросмотр изображения">
-<button class="submit-button" id="submit-button" type="submit">
-Опубликовать заметку
+      <aside class="sidebar">
+        <form class="form-card" id="post-form">
+          <h2>Добавить заметку ✍️</h2>
+          <p class="form-intro">Напиши коротко и прикрепи изображение для своей публикации.</p>
 
-</button>
+          <label class="field-label" for="content">Текст заметки</label>
+          <textarea id="content" name="content" maxlength="300"
+            placeholder="Например: сегодня у нас прошёл классный конкурс!" required></textarea>
+          <p class="hint">До 300 символов.</p>
 
-        <p class="status" id="form-status" role="status"></p>
-      </form>
-    </aside>
-  </div>
-</main>
-<footer class="footer">
-  Сделано с ✂️, идеями и хорошим настроением
-</footer>
+          <label class="field-label" for="image">Изображение</label>
+          <input id="image" name="image" type="file" accept="image/png,image/jpeg,image/webp" required>
+          <p class="hint">PNG, JPG или WEBP. Максимум 5 MB.</p>
+          <img class="preview" id="preview" alt="Предпросмотр изображения">
+
+          <button class="submit-button" id="submit-button" type="submit">Опубликовать заметку</button>
+          <p class="status" id="form-status" role="status"></p>
+        </form>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="footer">Сделано с ✂️, идеями и хорошим настроением</footer>
 </div>
 
-<!-- Клиент Supabase загружается через CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
-// Вставь сюда данные своего проекта Supabase
-const SUPABASE_URL = "ВСТАВЬ_PROJECT_URL";
+  const SUPABASE_URL = "ВСТАВЬ_PROJECT_URL";
+  const SUPABASE_PUBLIC_KEY = "ВСТАВЬ_PUBLISHABLE_KEY";
+  const BUCKET_NAME = "wall-images";
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-const SUPABASE_PUBLIC_KEY = "ВСТАВЬ_PUBLISHABLE_KEY";
+  const postsElement = document.getElementById("posts");
+  const countElement = document.getElementById("post-count");
+  const form = document.getElementById("post-form");
+  const contentInput = document.getElementById("content");
+  const imageInput = document.getElementById("image");
+  const preview = document.getElementById("preview");
+  const submitButton = document.getElementById("submit-button");
+  const statusElement = document.getElementById("form-status");
 
-const BUCKET_NAME = "wall-images";
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
-const postsElement = document.getElementById("posts");
-const countElement = document.getElementById("post-count");
-const form = document.getElementById("post-form");
-const contentInput = document.getElementById("content");
-const imageInput = document.getElementById("image");
+  let supabaseClient = null;
 
-const preview = document.getElementById("preview");
-const submitButton = document.getElementById("submit-button");
-const statusElement = document.getElementById("form-status");
-
-let supabaseClient = null;
-function showStatus(message, type = "") {
-  statusElement.textContent = message;
-  statusElement.className = "status";
-
-  if (type) {
-    statusElement.classList.add(type);
-  }
-}
-function formatDate(dateString) {
-return new Date(dateString).toLocaleDateString("ru-RU", {
-
-day: "numeric",
-month: "long",
-
-year: "numeric"
-});
-}
-
-function showError(message) {
-  postsElement.replaceChildren();
-
-  const box = document.createElement("div");
-box.className = "empty-state";
-box.textContent = message;
-
-postsElement.appendChild(box);
-countElement.textContent = "Пока пусто";
-}
-
-function likedInThisTab(postId) {
-return sessionStorage.getItem("liked-" + postId) === "yes";
-}
-
-function renderPosts(posts) {
-  postsElement.replaceChildren();
-  countElement.textContent =
-    posts.length + (posts.length === 1 ? " заметка" : " заметок");
-  if (!posts.length) {
-    const empty = document.createElement("div");
-empty.className = "empty-state";
-empty.textContent =
-"Здесь пока тихо. Добавь первую заметку — и стенгазета оживёт! ✨";
-postsElement.appendChild(empty);
-return;
-}
-
-  for (const post of posts) {
-    const card = document.createElement("article");
-    card.className = "post-card";
-const imageWrap = document.createElement("div");
-imageWrap.className = "post-image-wrap";
-
-    const image = document.createElement("img");
-    image.className = "post-image";
-image.src = post.image_url;
-image.alt = "Изображение к заметке";
-image.loading = "lazy";
-
-    const label = document.createElement("span");
-    label.className = "post-image-label";
-    label.textContent = "НОВЫЙ ВЫПУСК";
-
-    imageWrap.append(image, label);
-    const body = document.createElement("div");
-    body.className = "post-body";
-    const text = document.createElement("p");
-    text.className = "post-content";
-    text.textContent = post.content;
-const footer = document.createElement("div");
-footer.className = "post-footer";
-
-    const date = document.createElement("time");
-date.dateTime = post.created_at;
-date.textContent = formatDate(post.created_at);
-
-    const likeButton = document.createElement("button");
-    likeButton.className = "like-button";
-likeButton.type = "button";
-likeButton.setAttribute("aria-label", "Поставить лайк");
-
-    const heart = document.createElement("span");
-    heart.className = "like-heart";
-    heart.textContent = likedInThisTab(post.id) ? "♥" : "♡";
-const likesCount = document.createElement("span");
-
-likesCount.textContent = String(post.likes);
-
-    if (likedInThisTab(post.id)) {
-      likeButton.disabled = true;
-    }
-    likeButton.append(heart, likesCount);
-    likeButton.addEventListener("click", async () => {
-      likeButton.disabled = true;
-const { data, error } = await supabaseClient.rpc(
-"like_wall_post",
-{ p_post_id: post.id }
-);
-
-      if (error) {
-likeButton.disabled = false;
-showStatus("Не получилось поставить лайк: " + error.message, "error");
-return;
-}
-
-sessionStorage.setItem("liked-" + post.id, "yes");
-heart.textContent = "♥";
-likesCount.textContent = String(data);
-});
-
-    footer.append(date, likeButton);
-    body.append(text, footer);
-card.append(imageWrap, body);
-postsElement.appendChild(card);
-}
-
-}
-
-async function loadPosts() {
-const { data, error } = await supabaseClient
-.from("wall_posts")
-.select("id, content, image_url, likes, created_at")
-.order("created_at", { ascending: false });
-
-  if (error) {
-    showError(
-      "Не удалось загрузить стенгазету. Проверь настройки Supabase и SQL-политики."
-    );
-    console.error(error);
-    return;
+  function showStatus(message, type = "") {
+    statusElement.textContent = message;
+    statusElement.className = "status";
+    if (type) statusElement.classList.add(type);
   }
 
-  renderPosts(data || []);
-}
-
-imageInput.addEventListener("change", () => {
-const file = imageInput.files[0];
-
-  if (!file) {
-    preview.removeAttribute("src");
-    preview.style.display = "none";
-    return;
-  }
-  if (file.size > MAX_FILE_SIZE) {
-    showStatus("Файл больше 5 MB. Выбери изображение поменьше.", "error");
-    imageInput.value = "";
-    preview.removeAttribute("src");
-    preview.style.display = "none";
-return;
-}
-
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-  if (!allowedTypes.includes(file.type)) {
-    showStatus("Поддерживаются только JPG, PNG и WEBP.", "error");
-    imageInput.value = "";
-preview.removeAttribute("src");
-preview.style.display = "none";
-
-return;
-}
-
-  showStatus("");
-  preview.src = URL.createObjectURL(file);
-  preview.style.display = "block";
-});
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const content = contentInput.value.trim();
-  const file = imageInput.files[0];
-  if (!content) {
-    showStatus("Напиши текст заметки.", "error");
-    return;
-  }
-
-  if (!file) {
-showStatus("Сначала выбери изображение.", "error");
-return;
-}
-
-  if (file.size > MAX_FILE_SIZE) {
-showStatus("Файл больше 5 MB.", "error");
-return;
-}
-
-  const extensions = {
-    "image/jpeg": "jpg",
-"image/png": "png",
-"image/webp": "webp"
-};
-
-  const extension = extensions[file.type];
-  if (!extension) {
-    showStatus("Поддерживаются только JPG, PNG и WEBP.", "error");
-    return;
-  }
-  submitButton.disabled = true;
-  submitButton.textContent = "Публикуем…";
-  showStatus("");
-  const filePath = crypto.randomUUID() + "." + extension;
-  const { error: uploadError } = await supabaseClient
-    .storage
-    .from(BUCKET_NAME)
-    .upload(filePath, file, {
-      contentType: file.type,
-      upsert: false
+  function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString("ru-RU", {
+      day: "numeric", month: "long", year: "numeric"
     });
-  if (uploadError) {
-    console.error(uploadError);
-    showStatus(
-      "Не удалось загрузить изображение. Проверь bucket и политику Storage.",
-      "error"
-    );
+  }
+
+  function showError(message) {
+    postsElement.replaceChildren();
+    const box = document.createElement("div");
+    box.className = "empty-state";
+    box.textContent = message;
+    postsElement.appendChild(box);
+    countElement.textContent = "Пока пусто";
+  }
+
+  function likedInThisTab(postId) {
+    return sessionStorage.getItem("liked-" + postId) === "yes";
+  }
+
+  function renderPosts(posts) {
+    postsElement.replaceChildren();
+    countElement.textContent = posts.length + (posts.length === 1 ? " заметка" : " заметок");
+
+    if (!posts.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "Здесь пока тихо. Добавь первую заметку — и стенгазета оживёт! ✨";
+      postsElement.appendChild(empty);
+      return;
+    }
+
+    for (const post of posts) {
+      const card = document.createElement("article");
+      card.className = "post-card";
+
+      const imageWrap = document.createElement("div");
+      imageWrap.className = "post-image-wrap";
+
+      const image = document.createElement("img");
+      image.className = "post-image";
+      image.src = post.image_url;
+      image.alt = "Изображение к заметке";
+      image.loading = "lazy";
+
+      const label = document.createElement("span");
+      label.className = "post-image-label";
+      label.textContent = "НОВЫЙ ВЫПУСК";
+
+      imageWrap.append(image, label);
+
+      const body = document.createElement("div");
+      body.className = "post-body";
+
+      const text = document.createElement("p");
+      text.className = "post-content";
+      text.textContent = post.content;
+
+      const footer = document.createElement("div");
+      footer.className = "post-footer";
+
+      const date = document.createElement("time");
+      date.dateTime = post.created_at;
+      date.textContent = formatDate(post.created_at);
+
+      const likeButton = document.createElement("button");
+      likeButton.className = "like-button";
+      likeButton.type = "button";
+      likeButton.setAttribute("aria-label", "Поставить лайк");
+
+      const heart = document.createElement("span");
+      heart.className = "like-heart";
+      heart.textContent = likedInThisTab(post.id) ? "♥" : "♡";
+
+      const likesCount = document.createElement("span");
+      likesCount.textContent = String(post.likes);
+
+      if (likedInThisTab(post.id)) likeButton.disabled = true;
+
+      likeButton.append(heart, likesCount);
+      likeButton.addEventListener("click", async () => {
+        likeButton.disabled = true;
+        const { data, error } = await supabaseClient.rpc("like_wall_post", { p_post_id: post.id });
+
+        if (error) {
+          likeButton.disabled = false;
+          showStatus("Не получилось поставить лайк: " + error.message, "error");
+          return;
+        }
+
+        sessionStorage.setItem("liked-" + post.id, "yes");
+        heart.textContent = "♥";
+        likesCount.textContent = String(data);
+      });
+
+      footer.append(date, likeButton);
+      body.append(text, footer);
+      card.append(imageWrap, body);
+      postsElement.appendChild(card);
+    }
+  }
+
+  async function loadPosts() {
+    const { data, error } = await supabaseClient
+      .from("wall_posts")
+      .select("id, content, image_url, likes, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      showError("Не удалось загрузить стенгазету. Проверь настройки Supabase и SQL-политики.");
+      console.error(error);
+      return;
+    }
+
+    renderPosts(data || []);
+  }
+
+  imageInput.addEventListener("change", () => {
+    const file = imageInput.files[0];
+
+    if (!file) {
+      preview.removeAttribute("src");
+      preview.style.display = "none";
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      showStatus("Файл больше 5 MB. Выбери изображение поменьше.", "error");
+      imageInput.value = "";
+      preview.removeAttribute("src");
+      preview.style.display = "none";
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      showStatus("Поддерживаются только JPG, PNG и WEBP.", "error");
+      imageInput.value = "";
+      preview.removeAttribute("src");
+      preview.style.display = "none";
+      return;
+    }
+
+    showStatus("");
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+  });
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const content = contentInput.value.trim();
+    const file = imageInput.files[0];
+
+    if (!content) {
+      showStatus("Напиши текст заметки.", "error");
+      return;
+    }
+
+    if (!file) {
+      showStatus("Сначала выбери изображение.", "error");
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      showStatus("Файл больше 5 MB.", "error");
+      return;
+    }
+
+    const extensions = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+    const extension = extensions[file.type];
+
+    if (!extension) {
+      showStatus("Поддерживаются только JPG, PNG и WEBP.", "error");
+      return;
+    }
+
+    submitButton.disabled = true;
+    submitButton.textContent = "Публикуем…";
+    showStatus("");
+
+    const filePath = crypto.randomUUID() + "." + extension;
+    const { error: uploadError } = await supabaseClient
+      .storage
+      .from(BUCKET_NAME)
+      .upload(filePath, file, { contentType: file.type, upsert: false });
+
+    if (uploadError) {
+      console.error(uploadError);
+      showStatus("Не удалось загрузить изображение. Проверь bucket и политику Storage.", "error");
+      submitButton.disabled = false;
+      submitButton.textContent = "Опубликовать заметку";
+      return;
+    }
+
+    const { data: publicUrlData } = supabaseClient
+      .storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(filePath);
+
+    const { error: insertError } = await supabaseClient
+      .from("wall_posts")
+      .insert({ content: content, image_url: publicUrlData.publicUrl });
+
+    if (insertError) {
+      console.error(insertError);
+      showStatus("Картинка загрузилась, но публикация не добавилась. Проверь SQL и права таблицы.", "error");
+      submitButton.disabled = false;
+      submitButton.textContent = "Опубликовать заметку";
+      return;
+    }
+
+    form.reset();
+    preview.removeAttribute("src");
+    preview.style.display = "none";
+    showStatus("Заметка опубликована! 🎉", "success");
     submitButton.disabled = false;
     submitButton.textContent = "Опубликовать заметку";
-    return;
+
+    await loadPosts();
+  });
+
+  if (SUPABASE_URL.includes("https://cjseeleyafgrqfjmlhpl.supabase.co") || SUPABASE_PUBLIC_KEY.includes("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqc2VlbGV5YWZncnFmam1saHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU1NDUzMzMsImV4cCI6MjExMTEyMTMzM30.TmBOkXki5_5nGmDYV94A9qMsaYjEmKdMlGEuTgMZrcU")) {
+    showError("Сначала вставь Project URL и публичный ключ Supabase в код.");
+  } else {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY);
+    loadPosts();
   }
-  const { data: publicUrlData } = supabaseClient
-    .storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(filePath);
-const { error: insertError } = await supabaseClient
-.from("wall_posts")
-.insert({
-content: content,
-
-image_url: publicUrlData.publicUrl
-});
-
-  if (insertError) {
-    console.error(insertError);
-    showStatus(
-      "Картинка загрузилась, но публикация не добавилась. Проверь SQL и права таблицы.",
-      "error"
-    );
-    submitButton.disabled = false;
-submitButton.textContent = "Опубликовать заметку";
-
-return;
-}
-
-  form.reset();
-  preview.removeAttribute("src");
-  preview.style.display = "none";
-  showStatus("Заметка опубликована! 🎉", "success");
-  submitButton.disabled = false;
-  submitButton.textContent = "Опубликовать заметку";
-
-  await loadPosts();
-});
-if (
-  SUPABASE_URL.includes("https://cjseeleyafgrqfjmlhpl.supabase.co") ||
-  SUPABASE_PUBLIC_KEY.includes("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqc2VlbGV5YWZncnFmam1saHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU1NDUzMzMsImV4cCI6MjExMTEyMTMzM30.TmBOkXki5_5nGmDYV94A9qMsaYjEmKdMlGEuTgMZrcU")
-) {
-  showError(
-    "Сначала вставь Project URL и публичный ключ Supabase в код."
-  );
-} else {
-supabaseClient = window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_PUBLIC_KEY
-);
-
-loadPosts();
-}
 </script>
 </body>
 </html>
+```
 
